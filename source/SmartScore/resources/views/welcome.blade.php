@@ -19,10 +19,10 @@
     <div style="background: linear-gradient(to top right, #6a0dad, #2e0854); min-height: 100vh; margin: 0;">
         <nav class="bg-black">
             <div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
-                <div class="relative flex h-16 items-center justify-between">
+                <div class="relative flex h-16 items-baseline justify-between">
                     <div class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
                         <div class="flex shrink-0 items-center">
-                            <img class="h-12" src="{{ asset('images/Logo.png') }}" alt="SmartScore Logo">
+                            <img class="h-20" src="{{ asset('images/Logo.png') }}" alt="SmartScore Logo">
                         </div>
                         <div class="hidden sm:ml-6 sm:block">
                             <div class="flex space-x-4">
