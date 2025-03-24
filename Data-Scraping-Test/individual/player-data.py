@@ -2,6 +2,8 @@ import requests
 import pandas as pd
 import time
 from bs4 import BeautifulSoup
+import os
+import random
 
 def extract_html(url, output_file="player.html"):
 
@@ -42,8 +44,83 @@ def find_table(file):
     else:
         print("No <table> with id 'matchlogs_all' found.")
 
+def extract_id(html_file="fbref_page.html"):
+    """
+    Reads the provided HTML file (which is expected to be a stats page from FBref),
+    finds each player's link (e.g. /en/players/123abc/Player-Name),
+    and extracts both the 'player_id' (123abc) and the player's name or slug (Player-Name).
+
+    Returns:
+        A list of tuples: [(player_id, player_slug), (player_id, player_slug), ...]
+        or however you decide to store the data.
+    """
+
+    if not os.path.exists(html_file):
+        print(f"File {html_file} not found.")
+        return []
+
+    # Read and parse the HTML
+    with open(html_file, "r", encoding="utf-8") as f:
+        soup = BeautifulSoup(f, "lxml")
+
+    # This is where you need to identify the correct table or tags to extract player info.
+    # For example, if the stats table has id="stats_standard", you might do:
+    table = soup.find("table", {"id": "stats_standard"})
+    if not table:
+        print("Table with id='stats_standard' not found.")
+        return []
+
+    # Or if players are in <td data-stat="player">. 
+    # Then you can select all <td> elements with data-stat="player".
+    # Each <td> has an <a> with the href that contains /players/<player_id>/
+    player_cells = table.find_all("td", {"data-stat": "player"})
+    if not player_cells:
+        print("No player cells found in the table.")
+        return []
+
+    # We'll store the results here
+    results = []
+
+    for cell in player_cells:
+        a_tag = cell.find("a")
+        if not a_tag:
+            # Some rows may not have a link if there's no player data
+            continue
+
+        href = a_tag.get("href", "")
+        # e.g. href = "/en/players/9f7c837d/Ben-Godfrey"
+
+        parts = href.split("/")
+        # Typically: ["", "en", "players", "9f7c837d", "Ben-Godfrey"]
+        if len(parts) >= 5 and parts[2] == "players":
+            player_id = parts[3]       # "9f7c837d"
+            player_slug = parts[4]    # "Ben-Godfrey"
+            # Alternatively, you might parse the text: a_tag.text for "Ben Godfrey"
+            # or do more splitting if you want the raw name. 
+            # For now, let’s store the slug.
+
+            results.append((player_id, player_slug))
+        else:
+            # If the URL doesn't match the expected pattern, skip or handle differently
+            continue
+
+    print(f"Found {len(results)} players with IDs.")
+    return results
+
+    # ChatGPT gave me this function as I was researching a way to extract player data from a webpage automatically.
+    # I have modified it to suit my needs and to work with the data I have.
+
 
 if __name__ == "__main__":
+    player_data = extract_id("fbref_page.html")
+    print("Extracted player data:\n", player_data)
+
+
+
+
+if __name__ == "__main__":
+
+    ids = extract_id("fbref_page.html")
 
     df = pd.read_csv("24_25_prem_player_stats_clean.csv")
 
@@ -51,11 +128,14 @@ if __name__ == "__main__":
 
     hyphenated_players = ["-".join(player.split()) for player in player_list] # This is to match the format of the URL
 
-    test_list = hyphenated_players[:5]
+    # '3ea50f67', 'Harvey-Barnes'
 
-    for player in test_list:
-        url = f'https://fbref.com/en/players/e342ad68/matchlogs/2024-2025/{player}-Match-Logs'
-        extract_html(url)
-        time.sleep(5)
 
-        find_table("player.html")
+    # for player in ids:
+    #player_id = player[0]
+    #player_slug = player[1]
+    url = f'https://fbref.com/en/players/3ea50f67/matchlogs/2024-2025/Harvey-Barnes-Match-Logs'
+    extract_html(url)
+    time.sleep(random.randint(1, 5))
+
+    find_table("player.html")
