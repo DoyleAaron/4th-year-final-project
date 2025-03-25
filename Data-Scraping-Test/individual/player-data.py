@@ -20,29 +20,33 @@ def extract_html(url, output_file="player.html"):
     with open("player.html", "w", encoding="utf-8") as file:
         file.write(response.text)
 
-def find_table(file):
-    # Load the HTML file with BeautifulSoup
-    with open(file, "r", encoding="utf-8") as file:
-        soup = BeautifulSoup(file, "lxml")  # You can also try 'lxml' if needed
+def find_table(html_file, player_id, player_slug):
+    """
+    Load the HTML, locate the 'matchlogs_all' table,
+    parse it into a DataFrame, then add columns for
+    'player_id' and 'player_slug' before saving.
+    """
 
-    # Locate the <table> with id 'stats_standard'
+    with open(html_file, "r", encoding="utf-8") as f:
+        soup = BeautifulSoup(f, "lxml")
+
     table = soup.find("table", {"id": "matchlogs_all"})
+    if not table:
+        print("No <table id='matchlogs_all'> found in", html_file)
+        return
 
-    if table:
-        print("Found <table id='matchlogs_all'>.")
-        # Print the first 500 characters of the table for inspection
-        print("Preview of <table> content:\n", table.prettify()[:500])
+    try:
+        df = pd.read_html(str(table))[0]
 
-        # Parse the table using pandas
-        try:
-            df = pd.read_html(str(table))[0]
-            # Save the DataFrame to a CSV file
-            df.to_csv("game_by_game_stats.csv", mode="a", header=False, index=False)
-            print("Player stats saved to 'game_by_game_stats.csv'")
-        except ValueError as e:
-            print(f"Error parsing the table: {e}")
-    else:
-        print("No <table> with id 'matchlogs_all' found.")
+        # Add your identifying columns
+        df["player_id"] = player_id
+        df["player_slug"] = player_slug
+
+        # Append to CSV
+        df.to_csv("game_by_game_stats.csv", mode="a", header=False, index=False)
+        print(f"Appended data for player_id={player_id}, slug={player_slug} to 'game_by_game_stats.csv'")
+    except ValueError as e:
+        print(f"Error parsing the table: {e}")
 
 def extract_id(html_file="fbref_page.html"):
     """
@@ -121,21 +125,19 @@ if __name__ == "__main__":
 if __name__ == "__main__":
 
     ids = extract_id("fbref_page.html")
+    print(ids)
 
-    df = pd.read_csv("24_25_prem_player_stats_clean.csv")
+    # df = pd.read_csv("24_25_prem_player_stats_clean.csv")
 
-    player_list = df["Player"].tolist()
+    # player_list = df["Player"].tolist()
 
-    hyphenated_players = ["-".join(player.split()) for player in player_list] # This is to match the format of the URL
-
-    # '3ea50f67', 'Harvey-Barnes'
-
+    # hyphenated_players = ["-".join(player.split()) for player in player_list] # This is to match the format of the URL
 
     # for player in ids:
-    #player_id = player[0]
-    #player_slug = player[1]
-    url = f'https://fbref.com/en/players/3ea50f67/matchlogs/2024-2025/Harvey-Barnes-Match-Logs'
-    extract_html(url)
-    time.sleep(random.randint(1, 5))
+    #     player_id = player[0]
+    #     player_slug = player[1]
+    #     url = f'https://fbref.com/en/players/{player_id}/matchlogs/2024-2025/{player_slug}-Match-Logs'
+    #     extract_html(url)
+    #     time.sleep(random.randint(11, 15))
 
-    find_table("player.html")
+    #     find_table("player.html", player_id, player_slug)
