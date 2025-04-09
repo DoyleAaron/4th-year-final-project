@@ -5,59 +5,156 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Player;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
+use Illuminate\Support\Facades\Log;
+
 
 class PredictionController extends Controller
 {
     public function showForm()
     {
         $players = Player::orderBy('name')->get();
-        return view('predict', compact('players'));
+        $teams = DB::table('teams')->get();
+        return view('predict', compact('players', 'teams'));
     }
 
     public function runPrediction(Request $request)
     {
         $player = Player::findOrFail($request->player_id);
+        $opponent = DB::table('teams')->find($request->opponent_id);
 
-        // Check if they are GK
-        $isGK = strtoupper($player->position) === 'GK';
+        // Debug: Log player and opponent data
+        Log::info("Selected Player: " . $player->name);
+        Log::info("Opponent: " . $opponent->name);
 
-        // Fetch most recent prediction input row for this player (match on name or code)
+        // Check if they are GK, DF, MF, FW based on the position
+        $isGK = strtoupper(substr($player->position, 0, 2)) === 'GK';
+        $isDF = strtoupper(substr($player->position, 0, 2)) === 'DF';
+        $isMF = strtoupper(substr($player->position, 0, 2)) === 'MF';
+        $isFW = strtoupper(substr($player->position, 0, 2)) === 'FW';
+
+        // Fetch the relevant prediction input data
+        $playerNameHyphenated = str_replace(' ', '-', $player->name);
+
         $predictionRow = DB::table('player_prediction_inputs')
-            ->where('player_name', $player->name)
-            ->latest()
+            ->whereRaw('LOWER(player_name) = ?', [strtolower($playerNameHyphenated)])
+            ->where('opponent', $opponent->name)
+            ->orderByDesc('date')
             ->first();
+
+
+
+        // Debug: Log the prediction data
+        Log::info("Prediction data for player " . $player->name . ": " . json_encode($predictionRow));
 
         if (!$predictionRow) {
             return back()->with('error', 'No prediction input data found for this player.');
         }
 
-        // Load model
+        // Build the input structure based on position
+        // Build the input structure based on position
         if ($isGK) {
-            $model = include base_path('app/ML/GK_RF.php'); // or however you saved it
+            $input = [
+                'TeamID' => $predictionRow->team_id ?? 0,
+                'OpponentID' => $predictionRow->opponent_id ?? 0,
+                'Player-Code' => $predictionRow->player_code ?? 0,
+                'Team_Form_Rating' => $predictionRow->team_form_rating ?? 0,
+                'Opponent_Form_Rating' => $predictionRow->opponent_form_rating ?? 0,
+                'StartedID' => $predictionRow->started_id ?? 0,
+                'Player_Saves_Form' => $predictionRow->player_saves_form ?? 0,
+                'Player_Clean_Sheet_Form' => $predictionRow->player_clean_sheet_form ?? 0,
+                'Player_Goals_Against_Form' => $predictionRow->player_goals_against_form ?? 0,
+                'Player_FP_Form' => $predictionRow->player_fp_form ?? 0,
+            ];
+        } elseif ($isDF) {
+            $input = [
+                'VenueID' => $predictionRow->venue_id ?? 0,
+                'TeamID' => $predictionRow->team_id ?? 0,
+                'OpponentID' => $predictionRow->opponent_id ?? 0,
+                'Player-Code' => $predictionRow->player_code ?? 0,
+                'Team_Form_Rating' => $predictionRow->team_form_rating ?? 0,
+                'Opponent_Form_Rating' => $predictionRow->opponent_form_rating ?? 0,
+                'StartedID' => $predictionRow->started_id ?? 0,
+                'Player_Goals_Form' => $predictionRow->player_goals_form ?? 0,
+                'Player_Assists_Form' => $predictionRow->player_assists_form ?? 0,
+                'Player_Clean_Sheet_Form' => $predictionRow->player_clean_sheet_form ?? 0,
+                'Player_Ycard_Form' => $predictionRow->player_ycard_form ?? 0,
+                'Player_Rcard_Form' => $predictionRow->player_rcard_form ?? 0,
+                'Player_FP_Form' => $predictionRow->player_fp_form ?? 0,
+            ];
+        } elseif ($isMF) {
+            $input = [
+                'VenueID' => $predictionRow->venue_id ?? 0,
+                'TeamID' => $predictionRow->team_id ?? 0,
+                'OpponentID' => $predictionRow->opponent_id ?? 0,
+                'Player-Code' => $predictionRow->player_code ?? 0,
+                'Team_Form_Rating' => $predictionRow->team_form_rating ?? 0,
+                'Opponent_Form_Rating' => $predictionRow->opponent_form_rating ?? 0,
+                'StartedID' => $predictionRow->started_id ?? 0,
+                'Player_Goals_Form' => $predictionRow->player_goals_form ?? 0,
+                'Player_Assists_Form' => $predictionRow->player_assists_form ?? 0,
+                'Player_Clean_Sheet_Form' => $predictionRow->player_clean_sheet_form ?? 0,
+                'Player_Ycard_Form' => $predictionRow->player_ycard_form ?? 0,
+                'Player_Rcard_Form' => $predictionRow->player_rcard_form ?? 0,
+                'Player_FP_Form' => $predictionRow->player_fp_form ?? 0,
+            ];
+        } elseif ($isFW) {
+            $input = [
+                'VenueID' => $predictionRow->venue_id ?? 0,
+                'TeamID' => $predictionRow->team_id ?? 0,
+                'OpponentID' => $predictionRow->opponent_id ?? 0,
+                'Player-Code' => $predictionRow->player_code ?? 0,
+                'Team_Form_Rating' => $predictionRow->team_form_rating ?? 0,
+                'Opponent_Form_Rating' => $predictionRow->opponent_form_rating ?? 0,
+                'StartedID' => $predictionRow->started_id ?? 0,
+                'Player_Goals_Form' => $predictionRow->player_goals_form ?? 0,
+                'Player_Assists_Form' => $predictionRow->player_assists_form ?? 0,
+                'Player_Ycard_Form' => $predictionRow->player_ycard_form ?? 0,
+                'Player_Rcard_Form' => $predictionRow->player_rcard_form ?? 0,
+                'Player_FP_Form' => $predictionRow->player_fp_form ?? 0,
+            ];
         } else {
-            $model = include base_path('app/ML/Outfield_RF.php');
+            return back()->with('error', 'Invalid player position.');
         }
 
-        // Convert to input array
-        $input = [
-            'TeamID' => $predictionRow->team_id,
-            'OpponentID' => $predictionRow->opponent_id,
-            'Player-Code' => $predictionRow->player_code,
-            'Team_Form_Rating' => $predictionRow->team_form_rating,
-            'Opponent_Form_Rating' => $predictionRow->opponent_form_rating,
-            'StartedID' => $predictionRow->started_id,
-            'Player_Saves_Form' => $predictionRow->player_saves_form ?? 0,
-            'Player_Clean_Sheet_Form' => $predictionRow->player_clean_sheet_form ?? 0,
-            'Player_Goals_Against_Form' => $predictionRow->player_goals_against_form ?? 0,
-            'Player_FP_Form' => $predictionRow->player_fp_form ?? 0,
-        ];
 
-        $predictedPoints = $model->predict([$input])[0];
+        // Call the model for prediction
+        $modelFilename = $isGK ? 'GK_RF_model.pkl' : ($isDF ? 'DEF_RF_model.pkl' : ($isMF ? 'MID_RF_model.pkl' : 'ATT_RF_model.pkl'));
+        Log::info("Model input data for player {$player->name}:", $input);
+        $predictedPoints = $this->callPredictionModel($input, $modelFilename);
 
         return view('predict', [
             'players' => Player::orderBy('name')->get(),
             'selectedPlayer' => $player,
-            'predictedPoints' => $predictedPoints
+            'predictedPoints' => round($predictedPoints, 1),
+            'teams' => DB::table('teams')->get(),
         ]);
     }
+
+    private function callPredictionModel($input, $modelFilename)
+{
+    $inputJson = json_encode($input);
+    $pythonScriptPath = base_path('predict.py');
+
+    $process = new Process([
+        'python3',
+        $pythonScriptPath,
+        $inputJson,
+        $modelFilename
+    ]);
+
+    $process->run();
+
+    Log::error("Prediction model command: " . $process->getCommandLine());
+    Log::error("Prediction model standard output: " . $process->getOutput());
+    Log::error("Prediction model error output: " . $process->getErrorOutput());
+
+    if (!$process->isSuccessful()) {
+        return 'Error running prediction model.';
+    }
+
+    return trim($process->getOutput());
+}
+
 }

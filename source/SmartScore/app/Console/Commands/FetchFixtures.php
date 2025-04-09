@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use GuzzleHttp\Client;
+use Carbon\Carbon;
 
 class FetchFixtures extends Command
 {
@@ -45,7 +46,7 @@ class FetchFixtures extends Command
                 // Extract relevant information
                 $homeTeamName = $match['homeTeam']['name'];
                 $awayTeamName = $match['awayTeam']['name'];
-                $kickoff = $match['utcDate'];
+                $kickoff = Carbon::parse($match['utcDate'])->format('Y-m-d H:i:s');
 
                 // Look up the teams in your teams table
                 $homeTeam = DB::table('teams')->where('api_name', $homeTeamName)->first();

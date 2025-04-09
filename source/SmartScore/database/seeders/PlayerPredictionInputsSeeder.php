@@ -35,7 +35,7 @@ class PlayerPredictionInputsSeeder extends Seeder
                 'player_code' => is_numeric($rowData['Player-Code']) ? (int) $rowData['Player-Code'] : null,
                 'opponent_id' => is_numeric($rowData['OpponentID']) ? (int) $rowData['OpponentID'] : null,
                 'venue_id' => is_numeric($rowData['VenueID']) ? (int) $rowData['VenueID'] : null,
-                'started_id' => is_numeric($rowData['StartedID']) ? (int) $rowData['StartedID'] : null,
+                'started_id' => 1,
                 'player_goals_form' => is_numeric($rowData['Player_Goals_Form']) ? (float) $rowData['Player_Goals_Form'] : null,
                 'player_assists_form' => is_numeric($rowData['Player_Assists_Form']) ? (float) $rowData['Player_Assists_Form'] : null,
                 'player_minutes_form' => is_numeric($rowData['Player_Minutes_Form']) ? (float) $rowData['Player_Minutes_Form'] : null,
