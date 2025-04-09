@@ -1,10 +1,11 @@
 <?php
 
-use Illuminate\Support\Facades\Route;use App\Http\Controllers\PlayerPredictionController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PredictionController;
 
-Route::get('/player/{id}/prediction', 
-    [PlayerPredictionController::class, 'show'])
-    ->name('player.prediction');
+Route::get('/predict', [PredictionController::class, 'showForm'])->name('predict.form');
+Route::post('/predict', [PredictionController::class, 'runPrediction'])->name('predict.run');
+
 
 Route::get('/', function () {
     return view('welcome');

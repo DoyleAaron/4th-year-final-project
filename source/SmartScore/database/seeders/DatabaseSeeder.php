@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             LeagueUserSeeder::class,
             PlayerPredictionInputsSeeder::class,
             GoalkeeperPredictionsInputSeeder::class,
+            TeamsSeeder::class,
         ]);
     }
 }
