@@ -36,7 +36,7 @@
                     <a href="#about-us" class="text-sm font-semibold text-gray-900">About us</a>
                 </div>
                 <div class="hidden lg:flex lg:flex-1 lg:justify-end">
-                    <a href="#" class="text-sm font-semibold text-gray-900">Log in <span aria-hidden="true">&rarr;</span></a>
+                    <a href="/login" class="text-sm font-semibold text-gray-900">Log in <span aria-hidden="true">&rarr;</span></a>
                 </div>
             </nav>
         </header>
@@ -54,8 +54,8 @@
                     <h1 class="text-5xl font-bold tracking-tight text-gray-900 sm:text-7xl">Welcome to SmartScore</h1>
                     <p class="mt-6 text-lg leading-8 text-gray-600">An AI powered fantasy football web application that aims to power your management decisions.</p>
                     <div class="mt-10 flex items-center justify-center gap-x-6">
-                        <a href="#" class="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Register</a>
-                        <a href="#" class="text-sm font-semibold text-gray-900">Log in<span aria-hidden="true">→</span></a>
+                        <a href="/register" class="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Register</a>
+                        <a href="/login" class="text-sm font-semibold text-gray-900">Log in<span aria-hidden="true">→</span></a>
                     </div>
                     <div class="bg-white py-16 sm:py-20">
                         <div class="mx-auto max-w-7xl px-6 lg:px-8">
