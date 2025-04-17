@@ -22,9 +22,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/leagues', [LeagueController::class, 'index'])->name('leagues.index');
     Route::get('/leagues/create', [LeagueController::class, 'create'])->name('leagues.create');
     Route::post('/leagues', [LeagueController::class, 'store'])->name('leagues.store');
-    Route::get('/leagues/{league}', [LeagueController::class, 'show'])->name('leagues.show');
-
-
-    Route::get('/leagues/join', [LeagueController::class, 'joinForm'])->name('leagues.joinForm');
+    Route::get('/leagues/joinForm', [LeagueController::class, 'joinForm'])->name('leagues.joinForm');
     Route::post('/leagues/join', [LeagueController::class, 'join'])->name('leagues.join');
+    
+
+    Route::get('/leagues/{league}', [LeagueController::class, 'show'])->name('leagues.show');
 });
