@@ -45,4 +45,11 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function leagues()
+    {
+        return $this->belongsToMany(League::class)
+            ->withPivot('points')
+            ->withTimestamps();
+    }
 }
