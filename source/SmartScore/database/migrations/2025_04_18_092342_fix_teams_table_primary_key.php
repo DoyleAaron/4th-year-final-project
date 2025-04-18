@@ -12,12 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('teams', function (Blueprint $table) {
-            $table->dropColumn('id'); // 🧨 only safe if no data depends on it
+            $table->dropColumn('id'); 
         });
     
         Schema::table('teams', function (Blueprint $table) {
-            $table->id()->first(); // re-add with correct type and primary key
-        });
+            $table->id()->first(); 
+        }); 
     }
 
     /**
