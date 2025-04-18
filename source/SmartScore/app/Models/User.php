@@ -52,4 +52,9 @@ class User extends Authenticatable
             ->withPivot('points')
             ->withTimestamps();
     }
+
+    public function players()
+    {
+        return $this->belongsToMany(\App\Models\Player::class)->withPivot('points');
+    }
 }

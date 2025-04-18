@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PredictionController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\LeagueController;
+use App\Http\Controllers\TeamController;
 
 Route::get('/predict', [PredictionController::class, 'showForm'])->name('predict.form');
 Route::post('/predict', [PredictionController::class, 'runPrediction'])->name('predict.run');
@@ -28,3 +29,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/leagues/{league}', [LeagueController::class, 'show'])->name('leagues.show');
 });
+
+Route::get('/team/select', [TeamController::class, 'select'])->name('team.select');
+
+Route::post('/team/select', [TeamController::class, 'store'])->name('team.store');
