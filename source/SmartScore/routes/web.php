@@ -33,3 +33,6 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/team/select', [TeamController::class, 'select'])->name('team.select');
 Route::post('/team/select', [TeamController::class, 'store'])->name('team.store');
 
+Route::get('/team/pick', [TeamController::class, 'pick'])->name('team.pick');
+Route::post('/team/pick', [TeamController::class, 'saveLineup'])->name('team.pick.save');
+

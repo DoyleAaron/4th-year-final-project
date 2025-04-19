@@ -15,10 +15,14 @@ class TeamController extends Controller
      */
     public function select()
     {
+        $user = Auth::user();
+        $selectedPlayers = $user->players()->with('team')->get();
+
         $players = Player::with('team')->get();
 
-        return view('team.select', compact('players'));
+        return view('team.select', compact('players', 'selectedPlayers'));
     }
+
 
 
     /**
@@ -50,6 +54,48 @@ class TeamController extends Controller
             ]);
         }
 
-        return redirect()->route('home')->with('success', '✅ Team saved to DB!');
+        return redirect()->route('team.pick')->with('success', 'Team selected! Now pick your starting XI.');
     }
+
+    public function pick()
+{
+    $user = Auth::user();
+    $squad = $user->players()->with('team')->get();
+
+    if ($squad->count() !== 15) {
+        return redirect()->route('team.select')->withErrors('You need to select your full squad first.');
+    }
+
+    return view('team.pick', compact('squad'));
+}
+
+public function saveLineup(Request $request)
+{
+    $request->validate([
+        'starters' => ['required', 'array', 'size:11'],
+        'subs' => ['required', 'array', 'size:4'],
+        'starters.*' => ['required', 'distinct', 'exists:players,id'],
+        'subs.*' => ['required', 'distinct', 'exists:players,id'],
+    ]);
+
+    // Optionally store to pivot or a new lineup table
+    $user = Auth::user();
+
+    foreach ($request->starters as $playerId) {
+        \DB::table('player_user')
+            ->where('user_id', $user->id)
+            ->where('player_id', $playerId)
+            ->update(['starting' => true]);
+    }
+
+    foreach ($request->subs as $playerId) {
+        \DB::table('player_user')
+            ->where('user_id', $user->id)
+            ->where('player_id', $playerId)
+            ->update(['starting' => false]);
+    }
+
+    return redirect()->route('home')->with('success', 'Starting 11 and subs saved!');
+}
+
 }
