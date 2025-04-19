@@ -2,63 +2,125 @@
 
 @section('content')
 <div class="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
-    <h1 class="text-2xl font-bold mb-4">Pick Your Starting 11</h1>
+    <h1 class="text-3xl font-bold text-purple-800 mb-6">Pick Your Starting 11</h1>
 
-    {{-- Success or error feedback --}}
+    {{-- Success message --}}
     @if(session('success'))
-        <div class="bg-green-100 text-green-800 p-4 rounded mb-4">
-            {{ session('success') }}
-        </div>
+    <div class="bg-green-100 border-l-4 border-green-500 text-green-800 p-4 rounded mb-6 shadow">
+        {{ session('success') }}
+    </div>
     @endif
 
+    {{-- Error messages --}}
     @if($errors->any())
-        <div class="bg-red-100 text-red-700 p-4 rounded mb-4">
-            <ul>
-                @foreach($errors->all() as $error)
-                    <li>• {{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
+    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded shadow">
+        <h3 class="font-semibold text-lg mb-2">Error:</h3>
+        <ul class="list-disc pl-5 space-y-1 text-sm">
+            @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
     @endif
 
     <form method="POST" action="{{ route('team.pick.save') }}">
         @csrf
 
-        <div class="mb-6">
-            <h2 class="text-lg font-semibold mb-2">Starting XI</h2>
-            @for ($i = 1; $i <= 11; $i++)
-                <div class="mb-2">
-                    <select name="starters[]" class="w-full border p-2 rounded">
-                        <option value="" disabled selected>Select Player {{ $i }}</option>
-                        @foreach($squad as $player)
-                            <option value="{{ $player->id }}">
-                                {{ $player->name }} ({{ $player->position }}, {{ $player->team->name ?? 'No Team' }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-            @endfor
+        @php
+        $groupings = [
+            'GK' => ['label' => 'Goalkeeper', 'count' => 1],
+            'DF' => ['label' => 'Defender', 'count' => 4],
+            'MF' => ['label' => 'Midfielder', 'count' => 4],
+            'FW' => ['label' => 'Forward', 'count' => 2],
+        ];
+
+        $starterIndex = 0;
+        @endphp
+
+        @foreach($groupings as $code => $info)
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold text-purple-700 mb-4 border-b border-purple-200 pb-1">{{ $info['label'] }}s</h2>
+            <div class="space-y-3">
+                @for ($i = 1; $i <= $info['count']; $i++)
+                    @php $starterId = $startingIds[$starterIndex] ?? null; $starterIndex++; @endphp
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg px-4 py-2 flex items-center shadow-sm hover:shadow-md transition-all">
+                        <span class="font-medium text-gray-700 w-32">Pick {{ $info['label'] }} {{ $i }}</span>
+                        <select name="starters[]" class="ml-4 flex-1 border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-purple-500 player-select">
+                            <option value="" disabled>Select a {{ $info['label'] }}</option>
+                            @foreach($squad->where('position', $code) as $player)
+                                <option value="{{ $player->id }}"
+                                    @if(isset($starterId) && $starterId == $player->id) selected @endif>
+                                    {{ $player->name }} ({{ $player->team->name ?? 'No Team' }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endfor
+            </div>
+        </div>
+        @endforeach
+
+        {{-- Subs --}}
+        <div class="mb-10">
+            <h2 class="text-xl font-semibold text-purple-700 mb-4 border-b border-purple-200 pb-1">Substitutes (Any Position)</h2>
+            <div class="space-y-3">
+                @for ($i = 0; $i < 4; $i++)
+                    @php $subId = $subIds[$i] ?? null; @endphp
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg px-4 py-2 flex items-center shadow-sm hover:shadow-md transition-all">
+                        <span class="font-medium text-gray-700 w-32">Sub {{ $i + 1 }}</span>
+                        <select name="subs[]" class="ml-4 flex-1 border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-purple-500 player-select">
+                            <option value="" disabled>Select Sub {{ $i + 1 }}</option>
+                            @foreach($squad as $player)
+                                <option value="{{ $player->id }}"
+                                    @if(isset($subId) && $subId == $player->id) selected @endif>
+                                    {{ $player->name }} ({{ $player->position }}, {{ $player->team->name ?? 'No Team' }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endfor
+            </div>
         </div>
 
-        <div class="mb-6">
-            <h2 class="text-lg font-semibold mb-2">Substitutes</h2>
-            @for ($i = 1; $i <= 4; $i++)
-                <div class="mb-2">
-                    <select name="subs[]" class="w-full border p-2 rounded">
-                        <option value="" disabled selected>Select Sub {{ $i }}</option>
-                        @foreach($squad as $player)
-                            <option value="{{ $player->id }}">
-                                {{ $player->name }} ({{ $player->position }}, {{ $player->team->name ?? 'No Team' }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-            @endfor
+        <div class="flex justify-end">
+            <button type="submit" class="!bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg shadow">
+                Save Lineup
+            </button>
         </div>
-
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Save Lineup
-        </button>
     </form>
 </div>
 @endsection
+
+<!-- This JS was generated by ChatGPT to help me handle multiple duplicate player selections and  -->
+<script>
+    function updateSelectOptions() {
+        const allSelects = document.querySelectorAll('.player-select');
+
+        // Get all selected values (excluding empty)
+        const selectedValues = Array.from(allSelects)
+            .map(select => select.value)
+            .filter(value => value !== "");
+
+        allSelects.forEach(select => {
+            const currentValue = select.value;
+            Array.from(select.options).forEach(option => {
+                if (option.value === "") return;
+
+                // Disable option if it's selected elsewhere (but not this dropdown's current value)
+                option.disabled = selectedValues.includes(option.value) && option.value !== currentValue;
+            });
+        });
+    }
+    // Setup on page load
+    window.addEventListener('load', () => {
+        updateSelectOptions();
+        updateBudget();
+
+        document.querySelectorAll('.player-select').forEach(select => {
+            select.addEventListener('change', () => {
+                updateSelectOptions();
+                updateBudget();
+            });
+        });
+    });
+</script>

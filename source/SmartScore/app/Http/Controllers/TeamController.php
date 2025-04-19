@@ -18,6 +18,10 @@ class TeamController extends Controller
         $user = Auth::user();
         $selectedPlayers = $user->players()->with('team')->get();
 
+        if ($user->players()->count() === 15) {
+            return redirect()->route('team.pick');
+        }
+
         $players = Player::with('team')->get();
 
         return view('team.select', compact('players', 'selectedPlayers'));
@@ -58,44 +62,61 @@ class TeamController extends Controller
     }
 
     public function pick()
-{
-    $user = Auth::user();
-    $squad = $user->players()->with('team')->get();
+    {
+        $user = Auth::user();
 
-    if ($squad->count() !== 15) {
-        return redirect()->route('team.select')->withErrors('You need to select your full squad first.');
+        $squad = $user->players()->with('team')->get();
+
+        $startingIds = $user->players()
+            ->wherePivot('starting', true)
+            ->orderBy('player_user.id')
+            ->pluck('players.id')
+            ->toArray();
+
+        $subIds = $user->players()
+            ->wherePivot('starting', false)
+            ->orderBy('player_user.id')
+            ->pluck('players.id')
+            ->toArray();
+
+
+        return view('team.pick', compact('squad', 'startingIds', 'subIds'));
     }
 
-    return view('team.pick', compact('squad'));
-}
 
-public function saveLineup(Request $request)
-{
-    $request->validate([
-        'starters' => ['required', 'array', 'size:11'],
-        'subs' => ['required', 'array', 'size:4'],
-        'starters.*' => ['required', 'distinct', 'exists:players,id'],
-        'subs.*' => ['required', 'distinct', 'exists:players,id'],
-    ]);
+    public function saveLineup(Request $request)
+    {
+        $request->validate([
+            'starters' => ['required', 'array', 'size:11'],
+            'subs' => ['required', 'array', 'size:4'],
+            'starters.*' => ['required', 'distinct', 'exists:players,id'],
+            'subs.*' => ['required', 'distinct', 'exists:players,id'],
+        ]);
 
-    // Optionally store to pivot or a new lineup table
-    $user = Auth::user();
+        // Check for duplicates between starters and subs
+        $overlap = array_intersect($request->starters, $request->subs);
 
-    foreach ($request->starters as $playerId) {
-        \DB::table('player_user')
-            ->where('user_id', $user->id)
-            ->where('player_id', $playerId)
-            ->update(['starting' => true]);
+        if (count($overlap) > 0) {
+            return back()->withErrors(['subs' => 'A player cannot be both in the starting XI and on the bench.'])->withInput();
+        }
+
+        $user = Auth::user();
+
+        // Update pivot table: set 'starting' true/false
+        foreach ($request->starters as $playerId) {
+            \DB::table('player_user')
+                ->where('user_id', $user->id)
+                ->where('player_id', $playerId)
+                ->update(['starting' => true]);
+        }
+
+        foreach ($request->subs as $playerId) {
+            \DB::table('player_user')
+                ->where('user_id', $user->id)
+                ->where('player_id', $playerId)
+                ->update(['starting' => false]);
+        }
+
+        return redirect()->route('home')->with('success', 'Starting 11 and subs saved!');
     }
-
-    foreach ($request->subs as $playerId) {
-        \DB::table('player_user')
-            ->where('user_id', $user->id)
-            ->where('player_id', $playerId)
-            ->update(['starting' => false]);
-    }
-
-    return redirect()->route('home')->with('success', 'Starting 11 and subs saved!');
-}
-
 }
