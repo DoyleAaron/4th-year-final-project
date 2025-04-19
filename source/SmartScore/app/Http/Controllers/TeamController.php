@@ -25,27 +25,31 @@ class TeamController extends Controller
      * Handle the selected players being submitted.
      */
     public function store(Request $request)
-{
-    $request->validate([
-        'players' => ['required', 'array', 'size:15'],
-        'players.*' => ['required', 'distinct', 'exists:players,id'],
-    ]);
+    {
+        $request->validate([
+            'players' => ['required', 'array', 'size:15'],
+            'players.*' => ['required', 'distinct', 'exists:players,id'],
+        ]);
 
-    // Group by team and check max 3
-    $players = Player::whereIn('id', $request->players)->get();
-    $teamCounts = $players->groupBy('team_id')->map->count();
+        $userId = auth()->id();
 
-    if ($teamCounts->max() > 3) {
-        return redirect()->back()
-            ->withInput()
-            ->withErrors(['players' => 'You can only select a maximum of 3 players from the same team.']);
+        if (!$userId) {
+            dd('Not logged in');
+        }
+
+        // Just to be sure: remove old entries before inserting fresh ones
+        \DB::table('player_user')->where('user_id', $userId)->delete();
+
+        foreach ($request->players as $playerId) {
+            \DB::table('player_user')->insert([
+                'user_id' => $userId,
+                'player_id' => $playerId,
+                'points' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return redirect()->route('home')->with('success', '✅ Team saved to DB!');
     }
-
-    // Save to pivot
-    $user = Auth::user();
-    $user->players()->sync(array_fill_keys($request->players, ['points' => 0]));
-
-    return redirect()->route('home')->with('success', 'Team selected successfully!');
-}
-
 }
