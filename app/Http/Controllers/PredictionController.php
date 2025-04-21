@@ -127,7 +127,7 @@ class PredictionController extends Controller
         return view('predict', [
             'players' => Player::orderBy('name')->get(),
             'selectedPlayer' => $player,
-            'predictedPoints' => round($predictedPoints, 1),
+            'predictedPoints' => round((float) $predictedPoints, 1),
             'teams' => DB::table('teams')->get(),
         ]);
     }
