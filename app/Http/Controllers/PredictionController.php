@@ -1,12 +1,16 @@
 <?php
+
 namespace App\Http\Controllers;
 
+// ChatGPT helped me with this code as I needed to figure out how to structure some parts of the code and how to make it work with the external hosting.
 use Illuminate\Http\Request;
 use App\Models\Player;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+
 
 
 class PredictionController extends Controller
@@ -132,28 +136,26 @@ class PredictionController extends Controller
     }
 
     private function callPredictionModel($input, $modelFilename)
-{
-    $inputJson = json_encode($input);
-    $pythonScriptPath = base_path('predict.py');
+    {
+        try {
+            $response = \Http::timeout(10)->post('https://your-flask-api-url.onrender.com/predict', [
+                'input' => $input,
+                'model' => $modelFilename,
+            ]);
 
-    $process = new Process([
-        'python3',
-        $pythonScriptPath,
-        $inputJson,
-        $modelFilename
-    ]);
+            if ($response->successful()) {
+                return $response->json('prediction');
+            }
 
-    $process->run();
+            \Log::error('Prediction API failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
 
-    Log::error("Prediction model command: " . $process->getCommandLine());
-    Log::error("Prediction model standard output: " . $process->getOutput());
-    Log::error("Prediction model error output: " . $process->getErrorOutput());
-
-    if (!$process->isSuccessful()) {
-        return 'Error running prediction model.';
+            return '0'; // fallback if API fails
+        } catch (\Exception $e) {
+            \Log::error('Exception calling prediction API: ' . $e->getMessage());
+            return '0';
+        }
     }
-
-    return trim($process->getOutput());
-}
-
 }
