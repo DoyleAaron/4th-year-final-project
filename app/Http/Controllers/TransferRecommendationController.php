@@ -84,23 +84,7 @@ class TransferRecommendationController extends Controller
         Log::info("Model input data for player {$player->name}:", $input);
         $ModelResult = $this->callPredictionModel($input, $modelFilename);
         Log::info('Raw model result:', ['result' => $ModelResult]);
-
-
-        $rk = $ModelResult['rk'] ?? null;
-
-        if (is_null($rk)) {
-            return back()->with('error', 'No recommendation returned from model.');
-        }
-
-        // Determine the correct table based on position
-        $table = $isGK ? 'goalkeeper_transfer_rec_inputs' : ($isDF ? 'defender_transfer_rec_inputs' : 'transfer_rec_inputs');
-
-        // Query the DB using rk
-        $recommendedPlayer = DB::table($table)->where('rk', $rk)->first();
-
-        if (!$recommendedPlayer) {
-            return back()->with('error', 'Recommended player not found in DB.');
-        }
+        $recommendedPlayer = $ModelResult['player'] ?? 'Unknown';
 
 
         return view('transfer_rec', [
