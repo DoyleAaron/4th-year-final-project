@@ -53,54 +53,32 @@ class TransferRecommendationController extends Controller
         if ($isGK) {
             $input = [
                 'Saves' => $predictionRow->saves ?? 0,
-                
+                'Save%' => $predictionRow->save_pct ?? 0,
+                'SoTA' => $predictionRow->sota ?? 0,
+                'CS' => $predictionRow->cs ?? 0,
+                'CS%' => $predictionRow->cs_pct ?? 0,
             ];
         } elseif ($isDF) {
             $input = [
-                'VenueID' => $predictionRow->venue_id ?? 0,
-                'TeamID' => $predictionRow->team_id ?? 0,
-                'OpponentID' => $predictionRow->opponent_id ?? 0,
-                'Player-Code' => $predictionRow->player_code ?? 0,
-                'Team_Form_Rating' => $predictionRow->team_form_rating ?? 0,
-                'Opponent_Form_Rating' => $predictionRow->opponent_form_rating ?? 0,
-                'StartedID' => $predictionRow->started_id ?? 0,
-                'Player_Goals_Form' => $predictionRow->player_goals_form ?? 0,
-                'Player_Assists_Form' => $predictionRow->player_assists_form ?? 0,
-                'Player_Clean_Sheet_Form' => $predictionRow->player_clean_sheet_form ?? 0,
-                'Player_Ycard_Form' => $predictionRow->player_ycard_form ?? 0,
-                'Player_Rcard_Form' => $predictionRow->player_rcard_form ?? 0,
-                'Player_FP_Form' => $predictionRow->player_fp_form ?? 0,
+                'Tkl%' => $predictionRow->tkl_pct ?? 0,
+                'Tkl+Int' => $predictionRow->tkl_plus_int ?? 0,
+                'Clr' => $predictionRow->clr ?? 0,
+                'Blocks' => $predictionRow->blocks ?? 0,
+                'Sh' => $predictionRow->sh ?? 0,
             ];
         } elseif ($isMF) {
             $input = [
-                'VenueID' => $predictionRow->venue_id ?? 0,
-                'TeamID' => $predictionRow->team_id ?? 0,
-                'OpponentID' => $predictionRow->opponent_id ?? 0,
-                'Player-Code' => $predictionRow->player_code ?? 0,
-                'Team_Form_Rating' => $predictionRow->team_form_rating ?? 0,
-                'Opponent_Form_Rating' => $predictionRow->opponent_form_rating ?? 0,
-                'StartedID' => $predictionRow->started_id ?? 0,
-                'Player_Goals_Form' => $predictionRow->player_goals_form ?? 0,
-                'Player_Assists_Form' => $predictionRow->player_assists_form ?? 0,
-                'Player_Clean_Sheet_Form' => $predictionRow->player_clean_sheet_form ?? 0,
-                'Player_Ycard_Form' => $predictionRow->player_ycard_form ?? 0,
-                'Player_Rcard_Form' => $predictionRow->player_rcard_form ?? 0,
-                'Player_FP_Form' => $predictionRow->player_fp_form ?? 0,
+                'PrgP' => $predictionRow->prgp ?? 0,
+                'xAG.1' => $predictionRow->xag_1 ?? 0,
+                'xG.1' => $predictionRow->xg_1 ?? 0,
+                'PrgC' => $predictionRow->prgc ?? 0,
             ];
         } elseif ($isFW) {
             $input = [
-                'VenueID' => $predictionRow->venue_id ?? 0,
-                'TeamID' => $predictionRow->team_id ?? 0,
-                'OpponentID' => $predictionRow->opponent_id ?? 0,
-                'Player-Code' => $predictionRow->player_code ?? 0,
-                'Team_Form_Rating' => $predictionRow->team_form_rating ?? 0,
-                'Opponent_Form_Rating' => $predictionRow->opponent_form_rating ?? 0,
-                'StartedID' => $predictionRow->started_id ?? 0,
-                'Player_Goals_Form' => $predictionRow->player_goals_form ?? 0,
-                'Player_Assists_Form' => $predictionRow->player_assists_form ?? 0,
-                'Player_Ycard_Form' => $predictionRow->player_ycard_form ?? 0,
-                'Player_Rcard_Form' => $predictionRow->player_rcard_form ?? 0,
-                'Player_FP_Form' => $predictionRow->player_fp_form ?? 0,
+                'xG.1' => $predictionRow->xg_1 ?? 0,
+                'Gls.1' => $predictionRow->gls_1 ?? 0,
+                'npxG+xAG.1' => $predictionRow->npxg_plus_xag_1 ?? 0,
+                'xAG.1' => $predictionRow->xag_1 ?? 0,
             ];
         } else {
             return back()->with('error', 'Invalid player position.');
@@ -108,28 +86,30 @@ class TransferRecommendationController extends Controller
 
 
         // Call the model for prediction
-        $modelFilename = $isGK ? 'GK_RF_model.pkl' : ($isDF ? 'DEF_RF_model.pkl' : ($isMF ? 'MID_RF_model.pkl' : 'ATT_RF_model.pkl'));
+        $modelFilename = $isGK ? 'goalkeeper_transfer.pkl' : ($isDF ? 'defender_transfer.pkl' : ($isMF ? 'midfielder_transfer.pkl' : 'attacker_transfer.pkl'));
         Log::info("Model input data for player {$player->name}:", $input);
-        $predictedPoints = $this->callPredictionModel($input, $modelFilename);
+        $ModelResult = $this->callPredictionModel($input, $modelFilename);
+
+        // Extract name (and others if needed)
+        $recommendedPlayerName = $ModelResult['name'] ?? 'Unknown';
 
         return view('predict', [
             'players' => Player::orderBy('name')->get(),
             'selectedPlayer' => $player,
-            'predictedPoints' => round((float) $predictedPoints, 1),
-            'teams' => DB::table('teams')->get(),
+            'recommendedPlayer' => $recommendedPlayerName,
         ]);
     }
 
     private function callPredictionModel($input, $modelFilename)
     {
         try {
-            $response = \Http::timeout(10)->post('https://SmartScore-ML.onrender.com/predict', [
+            $response = \Http::timeout(10)->post('https://SmartScore-ML.onrender.com/predict/transfer', [
                 'input' => $input,
                 'model' => $modelFilename,
             ]);
 
             if ($response->successful()) {
-                return $response->json('prediction');
+                return $response->json();
             }
 
             \Log::error('Prediction API failed', [

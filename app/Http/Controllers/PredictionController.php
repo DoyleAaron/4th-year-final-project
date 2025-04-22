@@ -138,7 +138,7 @@ class PredictionController extends Controller
     private function callPredictionModel($input, $modelFilename)
     {
         try {
-            $response = \Http::timeout(10)->post('https://SmartScore-ML.onrender.com/predict', [
+            $response = \Http::timeout(10)->post('https://SmartScore-ML.onrender.com/predict/points', [
                 'input' => $input,
                 'model' => $modelFilename,
             ]);
