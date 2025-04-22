@@ -39,7 +39,7 @@
                         <a href="{{ url('/leagues') }}" class="text-gray-800 hover:text-indigo-600 font-medium">My Leagues</a>
                         <a href="{{ url('/predict') }}" class="text-gray-800 hover:text-indigo-600 font-medium">Points Predictor</a>
                         <a href="{{ url('/player-comparison') }}" class="text-gray-800 hover:text-indigo-600 font-medium">Player Comparison</a>
-                        <a href="{{ url('/transfer-recommendation') }}" class="text-gray-800 hover:text-indigo-600 font-medium">Transfer Recommendation</a>
+                        <a href="{{ url('/transfer_rec') }}" class="text-gray-800 hover:text-indigo-600 font-medium">Transfer Recommendation</a>
                         <a href="{{ url('/fixture-analyser') }}" class="text-gray-800 hover:text-indigo-600 font-medium">Fixture Analyser</a>
                     </div>
 

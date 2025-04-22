@@ -5,9 +5,7 @@ use App\Http\Controllers\PredictionController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\LeagueController;
 use App\Http\Controllers\TeamController;
-
-Route::get('/predict', [PredictionController::class, 'showForm'])->name('predict.form');
-Route::post('/predict', [PredictionController::class, 'runPrediction'])->name('predict.run');
+use App\Http\Controllers\TransferRecommendationController;
 
 
 Route::get('/', function () {
@@ -36,3 +34,8 @@ Route::post('/team/select', [TeamController::class, 'store'])->name('team.store'
 Route::get('/team/pick', [TeamController::class, 'pick'])->name('team.pick');
 Route::post('/team/pick', [TeamController::class, 'saveLineup'])->name('team.pick.save');
 
+Route::get('/predict', [PredictionController::class, 'showForm'])->name('predict.form');
+Route::post('/predict', [PredictionController::class, 'runPrediction'])->name('predict.run');
+
+Route::get('/transfer_rec', [TransferRecommendationController::class, 'showForm'])->name('transfer_rec.form');
+Route::post('/transfer_rec', [TransferRecommendationController::class, 'runPrediction'])->name('transfer_rec.run');
