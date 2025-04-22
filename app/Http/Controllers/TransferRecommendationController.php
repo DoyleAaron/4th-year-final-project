@@ -52,16 +52,8 @@ class TransferRecommendationController extends Controller
         // Build the input structure based on position
         if ($isGK) {
             $input = [
-                'TeamID' => $predictionRow->team_id ?? 0,
-                'OpponentID' => $predictionRow->opponent_id ?? 0,
-                'Player-Code' => $predictionRow->player_code ?? 0,
-                'Team_Form_Rating' => $predictionRow->team_form_rating ?? 0,
-                'Opponent_Form_Rating' => $predictionRow->opponent_form_rating ?? 0,
-                'StartedID' => $predictionRow->started_id ?? 0,
-                'Player_Saves_Form' => $predictionRow->player_saves_form ?? 0,
-                'Player_Clean_Sheet_Form' => $predictionRow->player_clean_sheet_form ?? 0,
-                'Player_Goals_Against_Form' => $predictionRow->player_goals_against_form ?? 0,
-                'Player_FP_Form' => $predictionRow->player_fp_form ?? 0,
+                'Saves' => $predictionRow->saves ?? 0,
+                
             ];
         } elseif ($isDF) {
             $input = [
