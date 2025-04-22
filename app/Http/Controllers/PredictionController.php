@@ -138,7 +138,7 @@ class PredictionController extends Controller
     private function callPredictionModel($input, $modelFilename)
     {
         try {
-            $response = \Http::timeout(10)->post('https://your-flask-api-url.onrender.com/predict', [
+            $response = \Http::timeout(10)->post('https://SmartScore-ML.onrender.com/predict', [
                 'input' => $input,
                 'model' => $modelFilename,
             ]);
