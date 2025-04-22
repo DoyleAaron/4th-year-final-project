@@ -31,15 +31,9 @@ class TransferRecommendationController extends Controller
         $isMF = strtoupper(substr($player->position, 0, 2)) === 'MF';
         $isFW = strtoupper(substr($player->position, 0, 2)) === 'FW';
 
-        // Fetch the relevant prediction input data
-        $playerNameHyphenated = str_replace(' ', '-', $player->name);
-
         $predictionRow = DB::table('transfer_rec_inputs')
-            ->whereRaw('LOWER(player_name) = ?', [strtolower($playerNameHyphenated)])
-            ->orderByDesc('date')
+            ->whereRaw('player = ?', [strtolower($player->name)])
             ->first();
-
-
 
         // Debug: Log the prediction data
         Log::info("Prediction data for player " . $player->name . ": " . json_encode($predictionRow));
@@ -89,14 +83,30 @@ class TransferRecommendationController extends Controller
         $modelFilename = $isGK ? 'goalkeeper_transfer.pkl' : ($isDF ? 'defender_transfer.pkl' : ($isMF ? 'midfielder_transfer.pkl' : 'attacker_transfer.pkl'));
         Log::info("Model input data for player {$player->name}:", $input);
         $ModelResult = $this->callPredictionModel($input, $modelFilename);
+        Log::info('Raw model result:', ['result' => $ModelResult]);
 
-        // Extract name (and others if needed)
-        $recommendedPlayerName = $ModelResult['name'] ?? 'Unknown';
+
+        $rk = $ModelResult['rk'] ?? null;
+
+        if (is_null($rk)) {
+            return back()->with('error', 'No recommendation returned from model.');
+        }
+
+        // Determine the correct table based on position
+        $table = $isGK ? 'goalkeeper_transfer_rec_inputs' : ($isDF ? 'defender_transfer_rec_inputs' : 'transfer_rec_inputs');
+
+        // Query the DB using rk
+        $recommendedPlayer = DB::table($table)->where('rk', $rk)->first();
+
+        if (!$recommendedPlayer) {
+            return back()->with('error', 'Recommended player not found in DB.');
+        }
+
 
         return view('transfer_rec', [
             'players' => Player::orderBy('name')->get(),
             'selectedPlayer' => $player,
-            'recommendedPlayer' => $recommendedPlayerName,
+            'recommendedPlayer' => $recommendedPlayer,
         ]);
     }
 

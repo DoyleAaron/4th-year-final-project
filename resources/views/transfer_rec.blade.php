@@ -29,7 +29,7 @@
             </div>
             @endif
 
-            <form action="{{ route('predict.run') }}" method="POST" class="space-y-4">
+            <form action="{{ route('transfer_rec.run') }}" method="POST" class="space-y-4">
                 @csrf
 
                 <!-- Player Dropdown -->
