@@ -21,11 +21,9 @@ class TransferRecommendationController extends Controller
     public function runPrediction(Request $request)
     {
         $player = Player::findOrFail($request->player_id);
-        $opponent = DB::table('teams')->find($request->opponent_id);
 
         // Debug: Log player and opponent data
         Log::info("Selected Player: " . $player->name);
-        Log::info("Opponent: " . $opponent->name);
 
         // Check if they are GK, DF, MF, FW based on the position
         $isGK = strtoupper(substr($player->position, 0, 2)) === 'GK';
@@ -36,9 +34,8 @@ class TransferRecommendationController extends Controller
         // Fetch the relevant prediction input data
         $playerNameHyphenated = str_replace(' ', '-', $player->name);
 
-        $predictionRow = DB::table('player_prediction_inputs')
+        $predictionRow = DB::table('transfer_rec_inputs')
             ->whereRaw('LOWER(player_name) = ?', [strtolower($playerNameHyphenated)])
-            ->where('opponent', $opponent->name)
             ->orderByDesc('date')
             ->first();
 
