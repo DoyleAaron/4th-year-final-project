@@ -93,7 +93,7 @@ class TransferRecommendationController extends Controller
         // Extract name (and others if needed)
         $recommendedPlayerName = $ModelResult['name'] ?? 'Unknown';
 
-        return view('predict', [
+        return view('transfer_rec', [
             'players' => Player::orderBy('name')->get(),
             'selectedPlayer' => $player,
             'recommendedPlayer' => $recommendedPlayerName,
