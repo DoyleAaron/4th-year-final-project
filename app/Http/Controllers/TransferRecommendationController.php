@@ -43,7 +43,6 @@ class TransferRecommendationController extends Controller
         }
 
         // Build the input structure based on position
-        // Build the input structure based on position
         if ($isGK) {
             $input = [
                 'Saves' => $predictionRow->saves ?? 0,

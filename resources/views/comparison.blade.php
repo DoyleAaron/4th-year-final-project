@@ -21,7 +21,7 @@
     <!-- Centred Content Container -->
     <div class="h-full flex items-center justify-center z-10 relative">
         <div class="max-w-xl w-full bg-white p-10 rounded-2xl shadow-lg">
-            <h1 class="text-2xl font-bold mb-6 text-center">Transfer Recommendation</h1>
+            <h1 class="text-2xl font-bold mb-6 text-center">Player Comparison</h1>
 
             @if(session('error'))
             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">
