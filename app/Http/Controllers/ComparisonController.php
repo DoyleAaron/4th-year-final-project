@@ -20,68 +20,45 @@ class ComparisonController extends Controller
 
     public function runPrediction(Request $request)
     {
-        $player = Player::findOrFail($request->player_id);
+        $player1 = Player::findOrFail($request->player_id);
+        $player2 = Player::findOrFail($request->player_id2);
 
-        // Debug: Log player and opponent data
-        Log::info("Selected Player: " . $player->name);
+        // Debug: Log players data
+        Log::info("Selected Player 1: " . $player1->name);
+        Log::info("Selected Player 2: " . $player2->name);
 
         // Check if they are GK, DF, MF, FW based on the position
-        $isGK = strtoupper(substr($player->position, 0, 2)) === 'GK';
-        $isDF = strtoupper(substr($player->position, 0, 2)) === 'DF';
-        $isMF = strtoupper(substr($player->position, 0, 2)) === 'MF';
-        $isFW = strtoupper(substr($player->position, 0, 2)) === 'FW';
+        $isGK = strtoupper(substr($player1->position, 0, 2)) === 'GK';
+        $isDF = strtoupper(substr($player1->position, 0, 2)) === 'DF';
+        $isMF = strtoupper(substr($player1->position, 0, 2)) === 'MF';
+        $isFW = strtoupper(substr($player1->position, 0, 2)) === 'FW';
 
-        $predictionRow = DB::table('transfer_rec_inputs')
-            ->whereRaw('player = ?', [strtolower($player->name)])
+        $isGK2 = strtoupper(substr($player2->position, 0, 2)) === 'GK';
+        $isDF2 = strtoupper(substr($player2->position, 0, 2)) === 'DF';
+        $isMF2 = strtoupper(substr($player2->position, 0, 2)) === 'MF';
+        $isFW2 = strtoupper(substr($player2->position, 0, 2)) === 'FW';
+
+        $predictionRow1 = DB::table('transfer_rec_inputs')
+            ->whereRaw('player = ?', [strtolower($player1->name)])
             ->first();
 
         // Debug: Log the prediction data
-        Log::info("Prediction data for player " . $player->name . ": " . json_encode($predictionRow));
+        Log::info("Prediction data for player " . $player1->name . ": " . json_encode($predictionRow1));
 
-        if (!$predictionRow) {
+        $predictionRow2 = DB::table('transfer_rec_inputs')
+            ->whereRaw('player = ?', [strtolower($player2->name)])
+            ->first();
+        // Debug: Log the prediction data
+        Log::info("Prediction data for player " . $player2->name . ": " . json_encode($predictionRow2));
+
+        if (!$predictionRow1 || !$predictionRow2) {
             return back()->with('error', 'No prediction input data found for this player.');
-        }
-
-        // Build the input structure based on position
-        // Build the input structure based on position
-        if ($isGK) {
-            $input = [
-                'Saves' => $predictionRow->saves ?? 0,
-                'Save%' => $predictionRow->save_pct ?? 0,
-                'SoTA' => $predictionRow->sota ?? 0,
-                'CS' => $predictionRow->cs ?? 0,
-                'CS%' => $predictionRow->cs_pct ?? 0,
-            ];
-        } elseif ($isDF) {
-            $input = [
-                'Tkl%' => $predictionRow->tkl_pct ?? 0,
-                'Tkl+Int' => $predictionRow->tkl_plus_int ?? 0,
-                'Clr' => $predictionRow->clr ?? 0,
-                'Blocks' => $predictionRow->blocks ?? 0,
-                'Sh' => $predictionRow->sh ?? 0,
-            ];
-        } elseif ($isMF) {
-            $input = [
-                'PrgP' => $predictionRow->prgp ?? 0,
-                'xAG.1' => $predictionRow->xag_1 ?? 0,
-                'xG.1' => $predictionRow->xg_1 ?? 0,
-                'PrgC' => $predictionRow->prgc ?? 0,
-            ];
-        } elseif ($isFW) {
-            $input = [
-                'xG.1' => $predictionRow->xg_1 ?? 0,
-                'Gls.1' => $predictionRow->gls_1 ?? 0,
-                'npxG+xAG.1' => $predictionRow->npxg_plus_xag_1 ?? 0,
-                'xAG.1' => $predictionRow->xag_1 ?? 0,
-            ];
-        } else {
-            return back()->with('error', 'Invalid player position.');
         }
 
 
         // Call the model for prediction
-        $modelFilename = $isGK ? 'goalkeeper_transfer.pkl' : ($isDF ? 'defender_transfer.pkl' : ($isMF ? 'midfielder_transfer.pkl' : 'attacker_transfer.pkl'));
-        Log::info("Model input data for player {$player->name}:", $input);
+        $modelFilename = 'FW_MF_comparison_model.pkl';
+        Log::info("Model input data for player {$player1->name}:", $input);
         $ModelResult = $this->callPredictionModel($input, $modelFilename);
         Log::info('Raw model result:', ['result' => $ModelResult]);
         $recommendedPlayer = $ModelResult['player'] ?? 'Unknown';
