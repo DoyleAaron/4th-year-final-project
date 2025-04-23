@@ -30,4 +30,5 @@ class Player extends Model
     {
         return $this->belongsToMany(\App\Models\User::class)->withPivot('points');
     }
+    
 }

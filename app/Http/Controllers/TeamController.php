@@ -67,6 +67,23 @@ class TeamController extends Controller
 
         $squad = $user->players()->with('team')->get();
 
+        
+        $points = [];
+
+        $outfieldPoints = \DB::table('outfield_stats')->select('player_', 'fantasy_points')->get();
+        foreach ($outfieldPoints as $row) {
+            $points[$row->player_] = $row->fantasy_points;
+        }
+
+        $keeperPoints = \DB::table('keeper_stats')->select('player_', 'fantasy_points')->get();
+        foreach ($keeperPoints as $row) {
+            $points[$row->player_] = $row->fantasy_points;
+        }
+
+        foreach ($squad as $player) {
+            $player->fantasy_points = $points[$player->name] ?? 0;
+        }
+
         $startingIds = $user->players()
             ->wherePivot('starting', true)
             ->orderBy('player_user.id')

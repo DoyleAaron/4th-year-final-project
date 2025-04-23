@@ -50,7 +50,7 @@
                             @foreach($squad->where('position', $code) as $player)
                                 <option value="{{ $player->id }}"
                                     @if(isset($starterId) && $starterId == $player->id) selected @endif>
-                                    {{ $player->name }} ({{ $player->team->name ?? 'No Team' }})
+                                    {{ $player->name }} ({{ $player->team->name ?? 'No Team' }}) - {{ $player->fantasy_points }} pts
                                 </option>
                             @endforeach
                         </select>
@@ -73,7 +73,7 @@
                             @foreach($squad as $player)
                                 <option value="{{ $player->id }}"
                                     @if(isset($subId) && $subId == $player->id) selected @endif>
-                                    {{ $player->name }} ({{ $player->position }}, {{ $player->team->name ?? 'No Team' }})
+                                    {{ $player->name }} ({{ $player->team->name ?? 'No Team' }}) - {{ $player->fantasy_points }} pts
                                 </option>
                             @endforeach
                         </select>
