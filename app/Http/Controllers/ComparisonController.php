@@ -38,10 +38,13 @@ class ComparisonController extends Controller
             ];
         } elseif ($isMF) {
             $input = [
-                'PrgP' => $row->prgp ?? 0,
-                'xAG.1' => $row->xag_1 ?? 0,
                 'xG.1' => $row->xg_1 ?? 0,
-                'PrgC' => $row->prgc ?? 0,
+                'Gls.1' => $row->gls_1 ?? 0,
+                'npxG+xAG.1' => $row->npxg_plus_xag_1 ?? 0,
+                'xAG.1' => $row->xag_1 ?? 0,
+                'Gls' => $row->gls ?? 0,
+                'Ast' => $row->ast ?? 0,
+                'npxG.1' => $row->npxg_1 ?? 0,
             ];
         } elseif ($isFW) {
             $input = [
