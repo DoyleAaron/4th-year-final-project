@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 // I had to get help from ChatGPT here as when I was trying this originally trying to split the players to appear in seperate lists was an issue and I couldnt get it right.
-// I also had to get help with the validation rules for the players such as not allowing duplicates and ensuring there is only 3 players from the same team.
+// I also had to get help with the validation rules for the players such as not allowing duplicates and ensuring there is only 3 players from the same team as well as obtaining and calculating the points total.
 
 use App\Models\Player;
 use Illuminate\Http\Request;
