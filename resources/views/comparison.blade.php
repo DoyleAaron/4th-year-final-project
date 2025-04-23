@@ -72,7 +72,7 @@
             @isset($recommendedPlayer)
             <div class="mt-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded text-center">
                 <p class="text-lg font-semibold">
-                    Recommended replacement for {{ $selectedPlayer->name }}:
+                    Recommended player between {{ $selectedPlayer1->name }} and {{ $selectedPlayer2->name }}:
                     <span class="text-xl">{{ $recommendedPlayer }}</span>
                 </p>
             </div>

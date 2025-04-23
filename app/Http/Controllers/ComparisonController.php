@@ -16,49 +16,51 @@ class ComparisonController extends Controller
 {
     private function preparePlayerInput($player, $row)
     {
-        // Check if they are GK, DF, MF, FW based on the position
         $isGK = strtoupper(substr($player->position, 0, 2)) === 'GK';
         $isDF = strtoupper(substr($player->position, 0, 2)) === 'DF';
         $isMF = strtoupper(substr($player->position, 0, 2)) === 'MF';
         $isFW = strtoupper(substr($player->position, 0, 2)) === 'FW';
 
-        // Build the input structure based on position for player 1
         if ($isGK) {
             $input = [
-                'Save%' => $predictionRow->save_pct ?? 0,
-                'CS%' => $predictionRow->cs_pct ?? 0,
-                'CS' => $predictionRow->cs ?? 0,
-                'SoTA' => $predictionRow->sota ?? 0,
+                'Save%' => $row->save_pct ?? 0,
+                'CS%' => $row->cs_pct ?? 0,
+                'CS' => $row->cs ?? 0,
+                'SoTA' => $row->sota ?? 0,
             ];
         } elseif ($isDF) {
             $input = [
-                'Tkl%' => $predictionRow->tkl_pct ?? 0,
-                'Tkl+Int' => $predictionRow->tkl_plus_int ?? 0,
-                'Clr' => $predictionRow->clr ?? 0,
-                'Blocks' => $predictionRow->blocks ?? 0,
-                'Sh' => $predictionRow->sh ?? 0,
+                'Tkl%' => $row->tkl_pct ?? 0,
+                'Tkl+Int' => $row->tkl_plus_int ?? 0,
+                'Clr' => $row->clr ?? 0,
+                'Blocks' => $row->blocks ?? 0,
+                'Sh' => $row->sh ?? 0,
             ];
         } elseif ($isMF) {
             $input = [
-                'PrgP' => $predictionRow->prgp ?? 0,
-                'xAG.1' => $predictionRow->xag_1 ?? 0,
-                'xG.1' => $predictionRow->xg_1 ?? 0,
-                'PrgC' => $predictionRow->prgc ?? 0,
+                'PrgP' => $row->prgp ?? 0,
+                'xAG.1' => $row->xag_1 ?? 0,
+                'xG.1' => $row->xg_1 ?? 0,
+                'PrgC' => $row->prgc ?? 0,
             ];
         } elseif ($isFW) {
             $input = [
-                'xG.1' => $predictionRow->xg_1 ?? 0,
-                'Gls.1' => $predictionRow->gls_1 ?? 0,
-                'npxG+xAG.1' => $predictionRow->npxg_plus_xag_1 ?? 0,
-                'xAG.1' => $predictionRow->xag_1 ?? 0,
-                'gls' => $predictionRow->gls ?? 0,
-                'ast' => $predictionRow->ast ?? 0,
-                'npxg.1' => $predictionRow->npxg_1 ?? 0,
+                'xG.1' => $row->xg_1 ?? 0,
+                'Gls.1' => $row->gls_1 ?? 0,
+                'npxG+xAG.1' => $row->npxg_plus_xag_1 ?? 0,
+                'xAG.1' => $row->xag_1 ?? 0,
+                'Gls' => $predictionRow->gls ?? 0,
+                'Ast' => $predictionRow->ast ?? 0,
+                'npxG.1' => $predictionRow->npxg_1 ?? 0,
+
             ];
         } else {
-            return back()->with('error', 'Invalid player position.');
+            return null;
         }
+
+        return $input;
     }
+
     public function showForm()
     {
         $players = Player::orderBy('name')->get();
@@ -101,7 +103,7 @@ class ComparisonController extends Controller
         // Use a helper to prepare input for each player
         $input1 = $this->preparePlayerInput($player1, $predictionRow1);
         $input2 = $this->preparePlayerInput($player2, $predictionRow2);
-        
+
 
         // Call the model for prediction
         switch ($position1) {
@@ -120,11 +122,12 @@ class ComparisonController extends Controller
             default:
                 return back()->with('error', 'Invalid position detected.');
         }
-        
-        Log::info("Model input data for player {$player1->name}:", $input1);
+
         $ModelResult = $this->callPredictionModel([$input1, $input2], $modelFilename);
         Log::info('Raw model result:', ['result' => $ModelResult]);
-        $recommendedPlayer = $ModelResult['player'] ?? 'Unknown';
+        $recommendedIndex = $ModelResult['recommended_index'] ?? null;
+        $recommendedPlayer = $recommendedIndex === 0 ? $player1->name : ($recommendedIndex === 1 ? $player2->name : 'Unknown');
+
 
 
         return view('comparison', [
@@ -138,7 +141,7 @@ class ComparisonController extends Controller
     private function callPredictionModel($inputs, $modelFilename)
     {
         try {
-            $response = Http::timeout(10)->post('https://SmartScore-ML.onrender.com/predict/compare', [
+            $response = Http::timeout(10)->post('https://SmartScore-ML.onrender.com/predict/comparison', [
                 'input' => $inputs,
                 'model' => $modelFilename,
             ]);
