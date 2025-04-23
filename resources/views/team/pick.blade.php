@@ -4,6 +4,10 @@
 <div class="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
     <h1 class="text-3xl font-bold text-purple-800 mb-6">Pick Your Starting 11</h1>
 
+    <div class="bg-purple-100 text-purple-800 font-semibold p-4 rounded mb-6 text-lg shadow-sm">
+        Total Fantasy Points: {{ $totalPoints }}
+    </div>
+
     {{-- Success message --}}
     @if(session('success'))
     <div class="bg-green-100 border-l-4 border-green-500 text-green-800 p-4 rounded mb-6 shadow">
@@ -28,10 +32,10 @@
 
         @php
         $groupings = [
-            'GK' => ['label' => 'Goalkeeper', 'count' => 1],
-            'DF' => ['label' => 'Defender', 'count' => 4],
-            'MF' => ['label' => 'Midfielder', 'count' => 4],
-            'FW' => ['label' => 'Forward', 'count' => 2],
+        'GK' => ['label' => 'Goalkeeper', 'count' => 1],
+        'DF' => ['label' => 'Defender', 'count' => 4],
+        'MF' => ['label' => 'Midfielder', 'count' => 4],
+        'FW' => ['label' => 'Forward', 'count' => 2],
         ];
 
         $starterIndex = 0;
@@ -42,52 +46,52 @@
             <h2 class="text-xl font-semibold text-purple-700 mb-4 border-b border-purple-200 pb-1">{{ $info['label'] }}s</h2>
             <div class="space-y-3">
                 @for ($i = 1; $i <= $info['count']; $i++)
-                    @php $starterId = $startingIds[$starterIndex] ?? null; $starterIndex++; @endphp
+                    @php $starterId=$startingIds[$starterIndex] ?? null; $starterIndex++; @endphp
                     <div class="bg-purple-50 border border-purple-200 rounded-lg px-4 py-2 flex items-center shadow-sm hover:shadow-md transition-all">
-                        <span class="font-medium text-gray-700 w-32">Pick {{ $info['label'] }} {{ $i }}</span>
-                        <select name="starters[]" class="ml-4 flex-1 border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-purple-500 player-select">
-                            <option value="" disabled>Select a {{ $info['label'] }}</option>
-                            @foreach($squad->where('position', $code) as $player)
-                                <option value="{{ $player->id }}"
-                                    @if(isset($starterId) && $starterId == $player->id) selected @endif>
-                                    {{ $player->name }} ({{ $player->team->name ?? 'No Team' }}) - {{ $player->fantasy_points }} pts
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                @endfor
+                    <span class="font-medium text-gray-700 w-32">Pick {{ $info['label'] }} {{ $i }}</span>
+                    <select name="starters[]" class="ml-4 flex-1 border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-purple-500 player-select">
+                        <option value="" disabled>Select a {{ $info['label'] }}</option>
+                        @foreach($squad->where('position', $code) as $player)
+                        <option value="{{ $player->id }}"
+                            @if(isset($starterId) && $starterId==$player->id) selected @endif>
+                            {{ $player->name }} ({{ $player->team->name ?? 'No Team' }}) - {{ $player->fantasy_points }} pts
+                        </option>
+                        @endforeach
+                    </select>
             </div>
+            @endfor
         </div>
-        @endforeach
+</div>
+@endforeach
 
-        {{-- Subs --}}
-        <div class="mb-10">
-            <h2 class="text-xl font-semibold text-purple-700 mb-4 border-b border-purple-200 pb-1">Substitutes (Any Position)</h2>
-            <div class="space-y-3">
-                @for ($i = 0; $i < 4; $i++)
-                    @php $subId = $subIds[$i] ?? null; @endphp
-                    <div class="bg-purple-50 border border-purple-200 rounded-lg px-4 py-2 flex items-center shadow-sm hover:shadow-md transition-all">
-                        <span class="font-medium text-gray-700 w-32">Sub {{ $i + 1 }}</span>
-                        <select name="subs[]" class="ml-4 flex-1 border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-purple-500 player-select">
-                            <option value="" disabled>Select Sub {{ $i + 1 }}</option>
-                            @foreach($squad as $player)
-                                <option value="{{ $player->id }}"
-                                    @if(isset($subId) && $subId == $player->id) selected @endif>
-                                    {{ $player->name }} ({{ $player->team->name ?? 'No Team' }}) - {{ $player->fantasy_points }} pts
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                @endfor
-            </div>
-        </div>
+{{-- Subs --}}
+<div class="mb-10">
+    <h2 class="text-xl font-semibold text-purple-700 mb-4 border-b border-purple-200 pb-1">Substitutes (Any Position)</h2>
+    <div class="space-y-3">
+        @for ($i = 0; $i < 4; $i++)
+            @php $subId=$subIds[$i] ?? null; @endphp
+            <div class="bg-purple-50 border border-purple-200 rounded-lg px-4 py-2 flex items-center shadow-sm hover:shadow-md transition-all">
+            <span class="font-medium text-gray-700 w-32">Sub {{ $i + 1 }}</span>
+            <select name="subs[]" class="ml-4 flex-1 border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-purple-500 player-select">
+                <option value="" disabled>Select Sub {{ $i + 1 }}</option>
+                @foreach($squad as $player)
+                <option value="{{ $player->id }}"
+                    @if(isset($subId) && $subId==$player->id) selected @endif>
+                    {{ $player->name }} ({{ $player->team->name ?? 'No Team' }}) - {{ $player->fantasy_points }} pts
+                </option>
+                @endforeach
+            </select>
+    </div>
+    @endfor
+</div>
+</div>
 
-        <div class="flex justify-end">
-            <button type="submit" class="!bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg shadow">
-                Save Lineup
-            </button>
-        </div>
-    </form>
+<div class="flex justify-end">
+    <button type="submit" class="!bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg shadow">
+        Save Lineup
+    </button>
+</div>
+</form>
 </div>
 @endsection
 

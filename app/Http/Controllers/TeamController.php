@@ -65,9 +65,8 @@ class TeamController extends Controller
     {
         $user = Auth::user();
 
-        $squad = $user->players()->with('team')->get();
+        $squad = $user->players()->with('team')->withPivot('starting')->get();
 
-        
         $points = [];
 
         $outfieldPoints = \DB::table('outfield_stats')->select('player_', 'fantasy_points')->get();
@@ -84,6 +83,13 @@ class TeamController extends Controller
             $player->fantasy_points = $points[$player->name] ?? 0;
         }
 
+        $totalPoints = $squad->filter(function ($player) {
+            return $player->pivot->starting;
+        })->sum(function ($player) {
+            return $player->fantasy_points ?? 0;
+        });
+        
+
         $startingIds = $user->players()
             ->wherePivot('starting', true)
             ->orderBy('player_user.id')
@@ -97,7 +103,7 @@ class TeamController extends Controller
             ->toArray();
 
 
-        return view('team.pick', compact('squad', 'startingIds', 'subIds'));
+        return view('team.pick', compact('squad', 'startingIds', 'subIds', 'totalPoints'));
     }
 
 
