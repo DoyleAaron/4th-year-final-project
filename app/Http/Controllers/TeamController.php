@@ -45,6 +45,23 @@ class TeamController extends Controller
             dd('Not logged in');
         }
 
+        $user = Auth::user();
+
+        $newIds = collect($request->players);
+        $currentIds = $user->players->pluck('id');
+
+        $transfersMade = $newIds->diff($currentIds)->count();
+
+        $totalCost = Player::whereIn('id', $request->players)->sum('value');
+        if ($totalCost > 100) {
+            return back()->withErrors(['players' => 'You’ve exceeded your £100m budget.'])->withInput();
+        }
+
+        if ($transfersMade > 3) {
+            return back()->withErrors(['players' => 'You can only make up to 3 transfers.']);
+        }
+
+
         // Just to be sure: remove old entries before inserting fresh ones
         \DB::table('player_user')->where('user_id', $userId)->delete();
 
@@ -88,7 +105,7 @@ class TeamController extends Controller
         })->sum(function ($player) {
             return $player->fantasy_points ?? 0;
         });
-        
+
 
         $startingIds = $user->players()
             ->wherePivot('starting', true)
@@ -141,5 +158,14 @@ class TeamController extends Controller
         }
 
         return redirect()->route('home')->with('success', 'Starting 11 and subs saved!');
+    }
+
+    public function transfers()
+    {
+        $user = Auth::user();
+        $selectedPlayers = $user->players()->with('team')->get();
+        $allPlayers = Player::with('team')->get();
+
+        return view('team.transfer', compact('selectedPlayers', 'allPlayers'));
     }
 }

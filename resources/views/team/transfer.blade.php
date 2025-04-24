@@ -1,0 +1,85 @@
+@extends('layouts.app')
+
+@section('content')
+<div class="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
+    <h1 class="text-2xl font-bold mb-4">Make Your Transfers</h1>
+
+    {{-- Budget Info --}}
+    <div class="mb-4 text-gray-700">
+        <strong>Budget Remaining:</strong> £<span id="budgetDisplay">100.0</span> / 100
+    </div>
+
+    @if ($errors->any())
+    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded shadow">
+        <h3 class="font-semibold text-lg mb-2">Error:</h3>
+        <ul class="list-disc pl-5 space-y-1 text-sm">
+            @foreach ($errors->all() as $error)
+            <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
+
+    {{-- Transfer Form --}}
+    <form method="POST" action="{{ route('team.transfers.store') }}">
+        @csrf
+
+        @php
+        $positions = [
+            'GK' => ['label' => 'Goalkeeper', 'count' => 2],
+            'DF' => ['label' => 'Defender', 'count' => 5],
+            'MF' => ['label' => 'Midfielder', 'count' => 5],
+            'FW' => ['label' => 'Forward', 'count' => 3],
+        ];
+        @endphp
+
+        @foreach($positions as $code => $info)
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold text-purple-700 mb-4 border-b border-purple-200 pb-1">{{ $info['label'] }}s</h2>
+            <div class="space-y-3">
+                @for ($i = 1; $i <= $info['count']; $i++)
+                    @php
+                        $currentPlayer = $selectedPlayers->where('position', $code)->values()->get($i - 1);
+                    @endphp
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg px-4 py-2 flex items-center shadow-sm hover:shadow-md transition-all">
+                        <span class="font-medium text-gray-700 w-32">Pick {{ $info['label'] }} {{ $i }}</span>
+                        <select name="players[]" class="ml-4 flex-1 border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-purple-500 player-select" onchange="updateBudget()">
+                            <option value="" disabled>Select a {{ $info['label'] }}</option>
+                            @foreach($allPlayers->where('position', $code) as $player)
+                            <option value="{{ $player->id }}" data-price="{{ $player->value }}"
+                                @if(optional($currentPlayer)->id === $player->id) selected @endif>
+                                {{ $player->name }} ({{ $player->team->name ?? 'No Team' }}) – £{{ number_format($player->value, 1) }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endfor
+            </div>
+        </div>
+        @endforeach
+
+        <div class="mt-8 flex items-center justify-between">
+            <div class="text-lg text-purple-700 font-medium">
+                Budget Remaining: £<span id="budgetDisplay">100.0</span> / 100
+            </div>
+            <button type="submit" class="!bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg shadow">
+                Confirm Transfers
+            </button>
+        </div>
+    </form>
+</div>
+
+{{-- Budget Tracker Script --}}
+<script>
+    function updateBudget() {
+        let total = 0;
+        document.querySelectorAll('.player-select').forEach(select => {
+            const selected = select.options[select.selectedIndex];
+            const price = selected?.dataset?.price;
+            if (price) total += parseFloat(price);
+        });
+        document.getElementById('budgetDisplay').textContent = (100 - total).toFixed(1);
+    }
+    window.onload = updateBudget;
+</script>
+@endsection

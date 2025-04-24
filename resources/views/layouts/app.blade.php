@@ -34,7 +34,6 @@
                     {{-- Centre: Nav Links --}}
                     <div class="hidden md:flex space-x-8 justify-center flex-1">
                         <a href="{{ url('team/select') }}" class="text-gray-800 hover:text-indigo-600 font-medium">My Team</a>
-                        <a href="{{ url('/points') }}" class="text-gray-800 hover:text-indigo-600 font-medium">Points</a>
                         <a href="{{ url('/transfers') }}" class="text-gray-800 hover:text-indigo-600 font-medium">Transfers</a>
                         <a href="{{ url('/leagues') }}" class="text-gray-800 hover:text-indigo-600 font-medium">My Leagues</a>
                         <a href="{{ url('/predict') }}" class="text-gray-800 hover:text-indigo-600 font-medium">Points Predictor</a>

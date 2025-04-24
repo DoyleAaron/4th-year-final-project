@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\LeagueController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TransferRecommendationController;
+use App\Http\Controllers\TransferController;
 use App\Http\Controllers\ComparisonController;
 
 Route::get('/', function () {
@@ -42,3 +43,6 @@ Route::post('/transfer_rec', [TransferRecommendationController::class, 'runPredi
 
 Route::get('/comparison', [ComparisonController::class, 'showForm'])->name('comparison.form');
 Route::post('/comparison', [ComparisonController::class, 'runPrediction'])->name('comparison.run');
+
+Route::get('/transfers', [TeamController::class, 'transfers'])->name('team.transfers');
+Route::post('/transfers/store', [TeamController::class, 'store'])->name('team.transfers.store');
