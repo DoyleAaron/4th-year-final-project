@@ -33,33 +33,53 @@ class TeamController extends Controller
      * Handle the selected players being submitted.
      */
     public function storeInitial(Request $request)
-    {
-        $request->validate([
-            'players' => ['required', 'array', 'size:15'],
-            'players.*' => ['required', 'distinct', 'exists:players,id'],
-        ]);
+{
+    $request->validate([
+        'players' => ['required', 'array', 'size:15'],
+        'players.*' => ['required', 'distinct', 'exists:players,id'],
+    ]);
 
-        $userId = auth()->id();
+    $userId = auth()->id();
 
-        if (!$userId) {
-            dd('Not logged in');
-        }
-
-        // Just to be sure: remove old entries before inserting fresh ones
-        \DB::table('player_user')->where('user_id', $userId)->delete();
-
-        foreach ($request->players as $playerId) {
-            \DB::table('player_user')->insert([
-                'user_id' => $userId,
-                'player_id' => $playerId,
-                'points' => 0,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        return redirect()->route('team.pick')->with('success', 'Team selected! Now pick your starting XI.');
+    if (!$userId) {
+        dd('Not logged in');
     }
+
+    // Remove any old records for this user
+    \DB::table('player_user')->where('user_id', $userId)->delete();
+
+    // Group selected players by position
+    $playersData = Player::whereIn('id', $request->players)->get()->groupBy('position');
+
+    // Define how many of each position should be in the starting 11
+    $starterCounts = ['GK' => 1, 'DF' => 4, 'MF' => 4, 'FW' => 2];
+
+    // Pick starting players based on count per position
+    $starters = [];
+    foreach ($starterCounts as $position => $count) {
+        if (isset($playersData[$position])) {
+            $starters = array_merge(
+                $starters,
+                $playersData[$position]->take($count)->pluck('id')->toArray()
+            );
+        }
+    }
+
+    // Insert each player into the pivot table with 'starting' flag
+    foreach ($request->players as $playerId) {
+        \DB::table('player_user')->insert([
+            'user_id' => $userId,
+            'player_id' => $playerId,
+            'points' => 0,
+            'starting' => in_array($playerId, $starters),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    return redirect()->route('team.pick')->with('success', 'Team selected! Starting XI has been set.');
+}
+
 
     public function pick()
     {
