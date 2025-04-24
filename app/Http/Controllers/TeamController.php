@@ -65,13 +65,12 @@ class TeamController extends Controller
             }
         }
 
-        // Insert each player into the pivot table with 'starting' flag
         foreach ($request->players as $playerId) {
             \DB::table('player_user')->insert([
                 'user_id' => $userId,
                 'player_id' => $playerId,
                 'points' => 0,
-                'starting' => in_array($playerId, $starters),
+                'starting' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -108,6 +107,20 @@ class TeamController extends Controller
         })->sum(function ($player) {
             return $player->fantasy_points ?? 0;
         });
+
+        $leagueIds = \DB::table('league_user')
+            ->where('user_id', $user->id)
+            ->pluck('league_id');
+
+        foreach ($leagueIds as $leagueId) {
+            \DB::table('league_user')->where([
+                'user_id' => $user->id,
+                'league_id' => $leagueId,
+            ])->update([
+                'points' => $totalPoints,
+                'updated_at' => now(),
+            ]);
+        }
 
         $startingIds = $squad->filter(fn($p) => $p->pivot->starting)->pluck('id')->toArray();
         $subIds = $squad->filter(fn($p) => !$p->pivot->starting)->pluck('id')->toArray();
