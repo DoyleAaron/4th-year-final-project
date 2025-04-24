@@ -51,25 +51,15 @@
                         <a href="{{ route('register') }}" class="text-gray-800 hover:text-indigo-600">Register</a>
                         @endif
                         @else
-                        <div class="relative group">
-                            <button class="flex items-center space-x-2 text-gray-800 hover:text-indigo-600 focus:outline-none">
-                                <span>{{ Auth::user()->name }}</span>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 9l-7 7-7-7" />
-                                </svg>
+                        @auth
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="text-gray-800 hover:text-indigo-600 font-medium">
+                                Logout
                             </button>
-                            <div class="absolute right-0 mt-2 w-48 bg-white border rounded-md shadow-lg hidden group-hover:block z-50">
-                                <a href="{{ route('logout') }}"
-                                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
-                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    {{ __('Logout') }}
-                                </a>
-                                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
-                                    @csrf
-                                </form>
-                            </div>
-                        </div>
+                        </form>
+                        @endauth
+
                         @endguest
                     </div>
                 </div>
