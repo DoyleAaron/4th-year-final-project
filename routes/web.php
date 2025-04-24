@@ -30,7 +30,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::get('/team/select', [TeamController::class, 'select'])->name('team.select');
-Route::post('/team/select', [TeamController::class, 'store'])->name('team.store');
+Route::post('/team/select', [TeamController::class, 'storeInitial'])->name('team.store.initial');
 
 Route::get('/team/pick', [TeamController::class, 'pick'])->name('team.pick');
 Route::post('/team/pick', [TeamController::class, 'saveLineup'])->name('team.pick.save');
@@ -45,4 +45,4 @@ Route::get('/comparison', [ComparisonController::class, 'showForm'])->name('comp
 Route::post('/comparison', [ComparisonController::class, 'runPrediction'])->name('comparison.run');
 
 Route::get('/transfers', [TeamController::class, 'transfers'])->name('team.transfers');
-Route::post('/transfers/store', [TeamController::class, 'store'])->name('team.transfers.store');
+Route::post('/transfers/store', [TeamController::class, 'storeTransfers'])->name('team.transfers.store');

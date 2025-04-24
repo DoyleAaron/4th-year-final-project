@@ -20,7 +20,7 @@
     </div>
     @endif
     {{-- Selection Form --}}
-    <form method="POST" action="{{ route('team.store') }}">
+    <form method="POST" action="{{ route('team.store.initial') }}">
         @csrf
 
         @php

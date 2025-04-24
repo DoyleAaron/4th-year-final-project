@@ -32,7 +32,7 @@ class TeamController extends Controller
     /**
      * Handle the selected players being submitted.
      */
-    public function store(Request $request)
+    public function storeInitial(Request $request)
     {
         $request->validate([
             'players' => ['required', 'array', 'size:15'],
@@ -44,23 +44,6 @@ class TeamController extends Controller
         if (!$userId) {
             dd('Not logged in');
         }
-
-        $user = Auth::user();
-
-        $newIds = collect($request->players);
-        $currentIds = $user->players->pluck('id');
-
-        $transfersMade = $newIds->diff($currentIds)->count();
-
-        $totalCost = Player::whereIn('id', $request->players)->sum('value');
-        if ($totalCost > 100) {
-            return back()->withErrors(['players' => 'You’ve exceeded your £100m budget.'])->withInput();
-        }
-
-        if ($transfersMade > 3) {
-            return back()->withErrors(['players' => 'You can only make up to 3 transfers.']);
-        }
-
 
         // Just to be sure: remove old entries before inserting fresh ones
         \DB::table('player_user')->where('user_id', $userId)->delete();
@@ -167,5 +150,67 @@ class TeamController extends Controller
         $allPlayers = Player::with('team')->get();
 
         return view('team.transfer', compact('selectedPlayers', 'allPlayers'));
+    }
+
+    public function storeTransfers(Request $request)
+    {
+        $request->validate([
+            'players' => ['required', 'array', 'size:15'],
+            'players.*' => ['required', 'distinct', 'exists:players,id'],
+        ]);
+
+        $user = Auth::user();
+        $newIds = collect($request->players);
+        $currentIds = $user->players->pluck('id');
+
+        $transfersMade = $newIds->diff($currentIds)->count();
+
+        if ($transfersMade > 3) {
+            return back()->withErrors(['players' => 'You can only make up to 3 transfers.']);
+        }
+
+        $totalCost = Player::whereIn('id', $request->players)->sum('value');
+        if ($totalCost > 100) {
+            return back()->withErrors(['players' => 'You’ve exceeded your £100m budget.']);
+        }
+
+        // Load fantasy points from stats tables
+        $outfieldPoints = \DB::table('outfield_stats')->select('player_', 'fantasy_points')->get();
+        $keeperPoints = \DB::table('keeper_stats')->select('player_', 'fantasy_points')->get();
+
+        $pointsLookup = [];
+        foreach ($outfieldPoints as $row) {
+            $pointsLookup[$row->player_] = $row->fantasy_points;
+        }
+        foreach ($keeperPoints as $row) {
+            $pointsLookup[$row->player_] = $row->fantasy_points;
+        }
+
+        // Preserve previous starting values
+        $previousStarting = \DB::table('player_user')
+            ->where('user_id', $user->Id)
+            ->pluck('starting', 'player_id');
+
+        // Get player names to match stats
+        $playerNames = Player::whereIn('id', $request->players)->pluck('name', 'id');
+
+        // Remove old entries
+        \DB::table('player_user')->where('user_id', $user->id)->delete();
+
+        foreach ($request->players as $playerId) {
+            $name = $playerNames[$playerId];
+            $weeklyPoints = $pointsLookup[$name] ?? 0;
+
+            \DB::table('player_user')->insert([
+                'user_id' => $user->id,
+                'player_id' => $playerId,
+                'points' => $weeklyPoints,
+                'starting' => $previousStarting[$playerId] ?? false,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return redirect()->route('team.pick')->with('success', 'Transfers complete! Now pick your starting XI.');
     }
 }
