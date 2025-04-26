@@ -66,15 +66,16 @@ class TeamController extends Controller
             }
         }
 
-        foreach ($request->players as $playerId) {
-            \DB::table('player_user')->insert([
-                'user_id' => $userId,
-                'player_id' => $playerId,
-                'points' => 0,
-                'starting' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+        foreach (array_unique($request->players) as $playerId) {
+            \DB::table('player_user')->updateOrInsert(
+                ['user_id' => $userId, 'player_id' => $playerId],
+                [
+                    'points' => 0,
+                    'starting' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
         }
 
         return redirect()->route('team.pick')->with('success', 'Team selected! Starting XI has been set.');
@@ -219,19 +220,21 @@ class TeamController extends Controller
         // Remove old entries
         \DB::table('player_user')->where('user_id', $user->id)->delete();
 
-        foreach ($request->players as $playerId) {
+        foreach (array_unique($request->players) as $playerId) {
             $name = $playerNames[$playerId];
             $weeklyPoints = $pointsLookup[$name] ?? 0;
-
-            \DB::table('player_user')->insert([
-                'user_id' => $user->id,
-                'player_id' => $playerId,
-                'points' => $weeklyPoints,
-                'starting' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+        
+            \DB::table('player_user')->updateOrInsert(
+                ['user_id' => $user->id, 'player_id' => $playerId],
+                [
+                    'points' => $weeklyPoints,
+                    'starting' => $previousStarting[$playerId] ?? null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
         }
+        
 
 
         return redirect()->route('team.pick')->with('success', 'Transfers complete! Now pick your starting XI.');
