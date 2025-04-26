@@ -124,8 +124,8 @@ class TeamController extends Controller
             ]);
         }
 
-        $startingIds = $squad->filter(fn($p) => $p->pivot->starting)->pluck('id')->toArray();
-        $subIds = $squad->filter(fn($p) => !$p->pivot->starting)->pluck('id')->toArray();
+        $startingIds = $squad->filter(fn($p) => $p->pivot->starting === 1)->pluck('id')->toArray();
+        $subIds = $squad->filter(fn($p) => $p->pivot->starting === 0)->pluck('id')->toArray();
 
         return view('team.pick', compact('squad', 'startingIds', 'subIds', 'totalPoints'));
     }
@@ -223,7 +223,7 @@ class TeamController extends Controller
         foreach (array_unique($request->players) as $playerId) {
             $name = $playerNames[$playerId];
             $weeklyPoints = $pointsLookup[$name] ?? 0;
-        
+
             \DB::table('player_user')->updateOrInsert(
                 ['user_id' => $user->id, 'player_id' => $playerId],
                 [
@@ -234,7 +234,7 @@ class TeamController extends Controller
                 ]
             );
         }
-        
+
 
 
         return redirect()->route('team.pick')->with('success', 'Transfers complete! Now pick your starting XI.');
