@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 // I had to get help from ChatGPT here as when I was trying this originally trying to split the players to appear in seperate lists was an issue and I couldnt get it right.
 // I also had to get help with the validation rules for the players such as not allowing duplicates and ensuring there is only 3 players from the same team as well as obtaining and calculating the points total.
+// AI helped me with the logic for the transfers and how to handle the players being selected as I was having a really weird bug with the starting 11 after a transfer was made.
 
 use App\Models\Player;
 use Illuminate\Http\Request;
@@ -226,11 +227,12 @@ class TeamController extends Controller
                 'user_id' => $user->id,
                 'player_id' => $playerId,
                 'points' => $weeklyPoints,
-                'starting' => $previousStarting[$playerId] ?? false,
+                'starting' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         }
+
 
         return redirect()->route('team.pick')->with('success', 'Transfers complete! Now pick your starting XI.');
     }

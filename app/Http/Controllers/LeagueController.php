@@ -13,7 +13,7 @@ class LeagueController extends Controller
         $user = auth()->user();
 
         // Make sure the leagues relationship exists and is correct
-        $leagues = $user?->leagues ?? collect(); // ✅ Safe fallback
+        $leagues = $user?->leagues ?? collect(); // Safe fallback
 
         return view('leagues.index', compact('leagues'));
     }

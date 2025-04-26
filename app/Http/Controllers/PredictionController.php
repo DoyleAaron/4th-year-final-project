@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 // ChatGPT helped me with this code as I needed to figure out how to structure some parts of the code and how to make it work with the external hosting.
+// It also helped me with sorting pulling the data from different tables depending on the position of the player.
 use Illuminate\Http\Request;
 use App\Models\Player;
 use Illuminate\Support\Facades\DB;
@@ -40,13 +41,26 @@ class PredictionController extends Controller
         // Fetch the relevant prediction input data
         $playerNameHyphenated = str_replace(' ', '-', $player->name);
 
-        $predictionRow = DB::table('player_prediction_inputs')
+        $opponentNameMap = [
+            'Man City' => 'Manchester City',
+            'Leicester' => 'Leicester City',
+            'Man United' => 'Manchester Utd',
+            'Newcastle' => 'Newcastle Utd',
+        ];
+
+        $opponentName = $opponentNameMap[trim($opponent->name)] ?? $opponent->name;
+
+        $tableName = $isGK ? 'goalkeeper_predictions_input' : 'player_prediction_inputs';
+
+        $query = DB::table($tableName)
             ->whereRaw('LOWER(player_name) = ?', [strtolower($playerNameHyphenated)])
-            ->where('opponent', $opponent->name)
-            ->orderByDesc('date')
-            ->first();
+            ->where('opponent', $opponentName);
 
+        if (!$isGK) {
+            $query = $query->orderByDesc('date');
+        }
 
+        $predictionRow = $query->first();
 
         // Debug: Log the prediction data
         Log::info("Prediction data for player " . $player->name . ": " . json_encode($predictionRow));
@@ -55,7 +69,6 @@ class PredictionController extends Controller
             return back()->with('error', 'No prediction input data found for this player.');
         }
 
-        // Build the input structure based on position
         // Build the input structure based on position
         if ($isGK) {
             $input = [

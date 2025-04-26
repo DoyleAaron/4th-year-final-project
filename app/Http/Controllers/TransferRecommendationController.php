@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+// I followed the structure of the other controllers for this controller as they were mostly the same logic for a lot of it.
+
 use Illuminate\Http\Request;
 use App\Models\Player;
 use Illuminate\Support\Facades\DB;
